@@ -1,72 +1,80 @@
-from datetime import UTC, datetime
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from fastapi import APIRouter, HTTPException, status
-
+from app.db.session import get_db
 from app.schemas.calendar import (
     CalendarConnectionCreate,
     CalendarConnectionResponse,
     CalendarConnectionUpdate,
     CalendarTestResponse,
 )
+from app.services.calendar_connections import (
+    create_current_calendar_connection,
+    get_current_calendar_connection,
+    list_current_calendar_connections,
+    test_current_calendar_connection,
+    to_calendar_connection_response,
+    update_current_calendar_connection,
+)
 
 router = APIRouter(prefix="/calendar-connections")
 
 
-def _demo_connection() -> CalendarConnectionResponse:
-    return CalendarConnectionResponse(
-        id="calendar_dev",
-        provider="ical",
-        mode="read_write",
-        status="active",
-        display_name="Robin iPhone Kalender",
-        last_sync_at=datetime(2026, 6, 15, 10, 0, tzinfo=UTC),
-    )
-
-
 @router.get("", response_model=list[CalendarConnectionResponse])
-async def list_calendar_connections() -> list[CalendarConnectionResponse]:
-    return [_demo_connection()]
+async def list_calendar_connections(
+    session: AsyncSession = Depends(get_db),
+) -> list[CalendarConnectionResponse]:
+    return await list_current_calendar_connections(session)
 
 
 @router.post("", response_model=CalendarConnectionResponse, status_code=201)
 async def create_calendar_connection(
     payload: CalendarConnectionCreate,
+    session: AsyncSession = Depends(get_db),
 ) -> CalendarConnectionResponse:
-    return CalendarConnectionResponse(
-        id="calendar_dev",
-        provider=payload.provider,
-        mode=payload.mode,
-        status="active",
-        display_name=payload.display_name,
-    )
+    return await create_current_calendar_connection(session, payload)
 
 
 @router.get("/{connection_id}", response_model=CalendarConnectionResponse)
-async def get_calendar_connection(connection_id: str) -> CalendarConnectionResponse:
-    if connection_id != "calendar_dev":
+async def get_calendar_connection(
+    connection_id: str,
+    session: AsyncSession = Depends(get_db),
+) -> CalendarConnectionResponse:
+    connection = await get_current_calendar_connection(session, connection_id)
+    if connection is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Calendar not found")
-    return _demo_connection()
+    return to_calendar_connection_response(connection)
 
 
 @router.patch("/{connection_id}", response_model=CalendarConnectionResponse)
 async def update_calendar_connection(
     connection_id: str,
     payload: CalendarConnectionUpdate,
+    session: AsyncSession = Depends(get_db),
 ) -> CalendarConnectionResponse:
-    current = await get_calendar_connection(connection_id)
-    data = current.model_dump()
-    data.update(payload.model_dump(exclude_unset=True))
-    return CalendarConnectionResponse(**data)
+    connection = await update_current_calendar_connection(session, connection_id, payload)
+    if connection is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Calendar not found")
+    return connection
 
 
 @router.post("/{connection_id}/test", response_model=CalendarTestResponse)
-async def test_calendar_connection(connection_id: str) -> CalendarTestResponse:
-    await get_calendar_connection(connection_id)
-    return CalendarTestResponse(ok=True, message="Calendar connection test placeholder succeeded")
+async def test_calendar_connection(
+    connection_id: str,
+    session: AsyncSession = Depends(get_db),
+) -> CalendarTestResponse:
+    result = await test_current_calendar_connection(session, connection_id)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Calendar not found")
+    return result
 
 
 @router.post("/{connection_id}/sync", response_model=CalendarTestResponse)
-async def sync_calendar_connection(connection_id: str) -> CalendarTestResponse:
-    await get_calendar_connection(connection_id)
+async def sync_calendar_connection(
+    connection_id: str,
+    session: AsyncSession = Depends(get_db),
+) -> CalendarTestResponse:
+    result = await test_current_calendar_connection(session, connection_id)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Calendar not found")
     return CalendarTestResponse(ok=True, message="Calendar sync placeholder queued")
-

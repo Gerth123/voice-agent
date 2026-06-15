@@ -1,5 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.session import get_db
 from app.schemas.webhooks import (
     InboundCallResponse,
     InboundCallWebhook,
@@ -7,26 +9,25 @@ from app.schemas.webhooks import (
     VoiceCallEndedWebhook,
     WebhookAck,
 )
+from app.services.calls import create_inbound_call, mark_provider_call_ended
 
 router = APIRouter(prefix="/webhooks")
 
 
 @router.post("/voice/inbound-call", response_model=InboundCallResponse)
-async def handle_inbound_call(payload: InboundCallWebhook) -> InboundCallResponse:
-    return InboundCallResponse(
-        call_id=f"call_{payload.provider_call_id}",
-        assistant_intro="Hallo, ich bin der KI-Assistent von Robin Gerth.",
-        audio_recording_enabled=False,
-        transcript_storage_enabled=False,
-    )
+async def handle_inbound_call(
+    payload: InboundCallWebhook,
+    session: AsyncSession = Depends(get_db),
+) -> InboundCallResponse:
+    return await create_inbound_call(session, payload)
 
 
 @router.post("/voice/call-ended", response_model=WebhookAck)
-async def handle_call_ended(payload: VoiceCallEndedWebhook) -> WebhookAck:
-    return WebhookAck(
-        ok=True,
-        message=f"Call ended event accepted for {payload.provider_call_id}",
-    )
+async def handle_call_ended(
+    payload: VoiceCallEndedWebhook,
+    session: AsyncSession = Depends(get_db),
+) -> WebhookAck:
+    return await mark_provider_call_ended(session, payload)
 
 
 @router.post("/n8n/notification-status", response_model=WebhookAck)
@@ -35,4 +36,3 @@ async def handle_notification_status(payload: NotificationStatusWebhook) -> Webh
         ok=True,
         message=f"Notification status accepted for {payload.notification_id}",
     )
-

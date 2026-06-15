@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UuidPrimaryKeyMixin
 from app.db.types import enum_type
-from app.models.enums import UserRole
+from app.models.enums import BookingMode, UserRole
 
 
 class User(UuidPrimaryKeyMixin, TimestampMixin, Base):
@@ -38,9 +38,9 @@ class UserSettings(UuidPrimaryKeyMixin, TimestampMixin, Base):
         default="Hallo, ich bin der KI-Assistent von Robin Gerth.",
         nullable=False,
     )
-    booking_mode: Mapped[str] = mapped_column(
-        String(50),
-        default="auto_book_clear_slots",
+    booking_mode: Mapped[BookingMode] = mapped_column(
+        enum_type(BookingMode),
+        default=BookingMode.AUTO_BOOK_CLEAR_SLOTS,
         nullable=False,
     )
     default_appointment_duration_minutes: Mapped[int] = mapped_column(default=30, nullable=False)
