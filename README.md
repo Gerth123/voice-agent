@@ -30,6 +30,8 @@ Backend:
 
 ```bash
 cd backend
+python -m venv .venv
+.venv\Scripts\python -m pip install -e ".[dev]"
 uvicorn app.main:app --reload
 ```
 
@@ -53,6 +55,8 @@ Docker Compose:
 ```bash
 docker compose up --build
 ```
+
+On Windows, make sure Docker Desktop is running before starting Compose.
 
 ## API
 
