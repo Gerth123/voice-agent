@@ -54,3 +54,23 @@ Docker Compose:
 docker compose up --build
 ```
 
+## API
+
+FastAPI exposes OpenAPI docs at:
+
+```text
+http://localhost:8000/docs
+```
+
+Current MVP route groups:
+
+- `/api/v1/health`
+- `/api/v1/user-settings/me`
+- `/api/v1/calls`
+- `/api/v1/appointments`
+- `/api/v1/calendar-connections`
+- `/api/v1/ical-settings`
+- `/api/v1/provider-settings/{voice|tts|stt|llm}`
+- `/api/v1/webhooks/voice/*`
+- `/api/v1/webhooks/n8n/*`
+
