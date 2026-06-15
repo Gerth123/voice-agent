@@ -1,9 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, String, Text
+from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UuidPrimaryKeyMixin
+from app.db.types import enum_type
 from app.models.enums import CallDirection, CallStatus
 
 
@@ -15,13 +16,13 @@ class Call(UuidPrimaryKeyMixin, TimestampMixin, Base):
     contact_id: Mapped[str | None] = mapped_column(ForeignKey("contacts.id"), index=True, nullable=True)
     provider: Mapped[str] = mapped_column(String(80), nullable=False)
     provider_call_id: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
-    direction: Mapped[CallDirection] = mapped_column(Enum(CallDirection), nullable=False)
+    direction: Mapped[CallDirection] = mapped_column(enum_type(CallDirection), nullable=False)
     caller_phone_hash: Mapped[str | None] = mapped_column(String(128), index=True, nullable=True)
     caller_phone_encrypted: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     started_at: Mapped[datetime] = mapped_column(index=True, nullable=False)
     ended_at: Mapped[datetime | None] = mapped_column(nullable=True)
     duration_seconds: Mapped[int | None] = mapped_column(nullable=True)
-    status: Mapped[CallStatus] = mapped_column(Enum(CallStatus), nullable=False)
+    status: Mapped[CallStatus] = mapped_column(enum_type(CallStatus), nullable=False)
     ai_disclosure_played_at: Mapped[datetime | None] = mapped_column(nullable=True)
     audio_recording_enabled: Mapped[bool] = mapped_column(default=False, nullable=False)
     audio_storage_url_encrypted: Mapped[str | None] = mapped_column(String(2048), nullable=True)
@@ -62,4 +63,3 @@ class CallTranscript(UuidPrimaryKeyMixin, TimestampMixin, Base):
     delete_at: Mapped[datetime | None] = mapped_column(index=True, nullable=True)
 
     call = relationship("Call", back_populates="transcript")
-

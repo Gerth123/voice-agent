@@ -1,9 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, String
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UuidPrimaryKeyMixin
+from app.db.types import enum_type
 from app.models.enums import CalendarMode, CalendarProvider
 
 
@@ -11,8 +12,8 @@ class CalendarConnection(UuidPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "calendar_connections"
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
-    provider: Mapped[CalendarProvider] = mapped_column(Enum(CalendarProvider), nullable=False)
-    mode: Mapped[CalendarMode] = mapped_column(Enum(CalendarMode), nullable=False)
+    provider: Mapped[CalendarProvider] = mapped_column(enum_type(CalendarProvider), nullable=False)
+    mode: Mapped[CalendarMode] = mapped_column(enum_type(CalendarMode), nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="active", nullable=False)
     last_sync_at: Mapped[datetime | None] = mapped_column(nullable=True)
     display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)

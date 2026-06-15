@@ -1,9 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, String
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UuidPrimaryKeyMixin
+from app.db.types import enum_type
 from app.models.enums import AppointmentRequestStatus, AppointmentStatus
 
 
@@ -17,7 +18,7 @@ class AppointmentRequest(UuidPrimaryKeyMixin, TimestampMixin, Base):
     topic_encrypted: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     duration_minutes: Mapped[int | None] = mapped_column(nullable=True)
     status: Mapped[AppointmentRequestStatus] = mapped_column(
-        Enum(AppointmentRequestStatus),
+        enum_type(AppointmentRequestStatus),
         default=AppointmentRequestStatus.DETECTED,
         nullable=False,
     )
@@ -51,7 +52,7 @@ class Appointment(UuidPrimaryKeyMixin, TimestampMixin, Base):
     ends_at: Mapped[datetime] = mapped_column(index=True, nullable=False)
     timezone: Mapped[str] = mapped_column(String(80), default="Europe/Berlin", nullable=False)
     status: Mapped[AppointmentStatus] = mapped_column(
-        Enum(AppointmentStatus),
+        enum_type(AppointmentStatus),
         default=AppointmentStatus.PROPOSED,
         nullable=False,
     )
@@ -59,4 +60,3 @@ class Appointment(UuidPrimaryKeyMixin, TimestampMixin, Base):
     deleted_at: Mapped[datetime | None] = mapped_column(nullable=True)
 
     appointment_request = relationship("AppointmentRequest", back_populates="appointment")
-

@@ -1,9 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, JSON, String
+from sqlalchemy import ForeignKey, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UuidPrimaryKeyMixin
+from app.db.types import enum_type
 from app.models.enums import UserRole
 
 
@@ -13,7 +14,7 @@ class User(UuidPrimaryKeyMixin, TimestampMixin, Base):
     tenant_id: Mapped[str] = mapped_column(ForeignKey("tenants.id"), index=True, nullable=False)
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True, nullable=False)
     display_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.OWNER, nullable=False)
+    role: Mapped[UserRole] = mapped_column(enum_type(UserRole), default=UserRole.OWNER, nullable=False)
     timezone: Mapped[str] = mapped_column(String(80), default="Europe/Berlin", nullable=False)
     locale: Mapped[str] = mapped_column(String(20), default="de-DE", nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
