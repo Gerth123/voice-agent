@@ -33,6 +33,13 @@ cd backend
 uvicorn app.main:app --reload
 ```
 
+Database migrations:
+
+```bash
+cd backend
+alembic upgrade head
+```
+
 Frontend:
 
 ```bash
